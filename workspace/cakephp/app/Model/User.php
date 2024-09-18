@@ -1,42 +1,57 @@
 <?php
-/**
- * Application model for CakePHP.
- *
- * This file is application-wide model file. You can put all
- * application-wide model-related methods here.
- *
- * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
- *
- * Licensed under The MIT License
- * For full copyright and license information, please see the LICENSE.txt
- * Redistributions of files must retain the above copyright notice.
- *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
- * @link          https://cakephp.org CakePHP(tm) Project
- * @package       app.Model
- * @since         CakePHP(tm) v 0.2.9
- * @license       https://opensource.org/licenses/mit-license.php MIT License
- */
+App::uses('AppModel', 'Model');
 
-App::uses('Model', 'Model');
-App::uses('BlowfishPasswordHasher', 'Controller/Component/Auth');
-/**
- * Application model for Cake.
- *
- * Add your application-wide methods in the class below, your models
- * will inherit them.
- *
- * @package       app.Model
- */
-class User extends AppModel {
-    public function beforeSave($options = array()) {
-        // if (isset($this->data[$this->alias]['password'])) {
-        //     $passwordHasher = new BlowfishPasswordHasher();
-        //     $this->data[$this->alias]['password'] = $passwordHasher->hash(
-        //         $this->data[$this->alias]['password']
-        //     );
-        // }
+class User extends AppModel
+{
+    public $validate = array(
+        'name' => array(
+            'rule' => 'notBlank',
+            'message' => 'Please provide a name.'
+        ),
+        'email' => array(
+            'email' => array(
+                'rule' => 'email',
+                'message' => 'Please provide a valid email address.',
+                'required' => true
+            ),
+            'unique' => array(
+                'rule' => 'isUnique',
+                'message' => 'This email is already in use.',
+                'on' => 'create', // Only check on create action, not update
+                'last' => true // This will make it run after the other validations
+            )
+        ),
+        'profile_picture' => array(
+            'rule' => array('extension', array('jpg', 'jpeg', 'gif', 'png')),
+            'message' => 'Please upload a valid image (jpg, gif, png).',
+            'allowEmpty' => true
+        ),
+        'password' => array(
+            'rule' => 'notBlank',
+            'message' => 'Please provide a password.',
+            'required' => true
+        ),
+        'password_confirm' => array(
+            'rule' => array('validatePasswordConfirm'),
+            'message' => 'Password confirmation does not match.',
+            'last' => true // Ensure this runs after the password rule
+        )
+    );
+
+
+    // Custom validation function to compare password and password_confirm
+    public function validatePasswordConfirm($check)
+    {
+        $passwordConfirm = array_values($check)[0];
+        return $this->data[$this->alias]['password'] === $passwordConfirm;
+    }
+
+    public function beforeSave($options = array())
+    {
+        // Hash the password before saving
+        if (!empty($this->data[$this->alias]['password'])) {
+            $this->data[$this->alias]['password'] = AuthComponent::password($this->data[$this->alias]['password']);
+        }
         return true;
     }
 }

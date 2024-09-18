@@ -25,14 +25,27 @@
  * its action called 'display', and we pass a param to select the view file
  * to use (in this case, /app/View/Pages/home.ctp)...
  */
-	Router::connect('/', array('controller' => 'Home', 'action' => 'main', 'home'));	
-	Router::connect('/posts', array('controller' => 'Posts', 'action' => 'index'));	
-	Router::connect('/tab_page/*', array('controller' => 'Home', 'action' => 'tab'));	
-	Router::connect('/work-experience', array('controller' => 'WorkExperience', 'action' => 'index'));
-	Router::connect('/about-me', array('controller' => 'AboutMe', 'action' => 'index'));
-	Router::connect('/photo-gallery', array('controller' => 'PhotoGallery', 'action' => 'index'));
-	Router::connect('/contact-me/*', array('controller' => 'ContactMe', 'action' => 'index'));
+/**Router::connect('/users/login', array('controller' => 'users', 'action' => 'login'));
+Router::connect('/users/register', array('controller' => 'users', 'action' => 'register'));
+*/
+Router::connect('users/login', array('controller' => 'users', 'action' => 'login'));
+Router::connect('users/register', array('controller' => 'users', 'action' => 'register'));
+Router::connect('users/editProfile', array('controller' => 'users', 'action' => 'editProfile'));
+Router::connect('/users/search', ['controller' => 'users', 'action' => 'search']);
+Router::connect('users/logout', array('controller' => 'users', 'action' => 'logout'));
+Router::connect('users/viewProfile', array('controller' => 'users', 'action' => 'viewProfile'));
 
+Router::connect('/conversations', array('controller' => 'conversations', 'action' => 'index'));	
+Router::connect('/conversations/view/:id', array('controller' => 'conversations', 'action' => 'view'), array('pass' => array('id'), 'id' => '[0-9]+'));
+ 
+/** 
+*Router::connect('/contacts/index', array('controller' => 'contacts', 'action' => 'index'));
+*Router::connect('/contacts/add', array('controller' => 'contacts', 'action' => 'add'));
+*Router::connect('/contacts/edit/:id', array('controller' => 'contacts', 'action' => 'edit'), array('pass' => array('id'), 'id' => '[0-9]+'));
+*Router::connect('/contacts/view/:id', array('controller' => 'contacts', 'action' => 'view'), array('pass' => array('id'), 'id' => '[0-9]+'));
+*/
+
+	 
 /**
  * ...and connect the rest of 'Pages' controller's URLs.
  */
