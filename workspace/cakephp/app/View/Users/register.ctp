@@ -12,6 +12,14 @@ echo $this->Form->input('password', array('type' => 'password', 'label' => 'Pass
 echo $this->Form->input('password_confirm', array('type' => 'password', 'label' => 'Password Confirmation', 'id' => 'password_confirm'));
 echo $this->Form->end('Register');
 ?>
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+<!-- jQuery (Ensure jQuery is included before this script) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 
 <script>
     $(document).ready(function() {

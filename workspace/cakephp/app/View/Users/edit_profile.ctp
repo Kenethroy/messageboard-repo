@@ -9,11 +9,16 @@ if ($this->Session->check('Message.flash')) {
 
 
 <div class="container">
-    <!-- Profile picture section -->
-   
      <div> 
      <button onclick="window.history.back();" class="btn btn-secondary" style="margin-bottom: 20px; margin-top: 20px; float: right">Back</button>
      <h1 style="text-align: center;">Edit Profile</h1>
+     <div> 
+         <?php
+         if ($this->Session->check('Message.flash')) {
+           echo $this->Session->flash();
+            }
+        ?>  
+    </div>
     </div>
     <div style="margin-right: 20px;">
         <div id="imagePreview" style="border: 1px solid #000; width: 100px; height: 100px; display: flex;">
