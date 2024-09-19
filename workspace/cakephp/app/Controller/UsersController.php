@@ -27,18 +27,8 @@ class UsersController extends AppController
     public function register() {
         if ($this->request->is('post')) {
             $this->User->create();
-            $email = $this->request->data['User']['email'];
-            $checkEmail = $this->User->find('first', array(
-                'conditions' => array('User.email' => $email)
-            ));
     
-            // If email already exists
-            if (!empty($checkEmail)) {
-                $this->Session->setFlash(__('The email address is already registered. Please use a different email.'));
-                return;
-            }
-    
-            // Save user data
+            // Try to save user data
             if ($this->User->save($this->request->data)) {
                 // Fetch the newly registered user's data
                 $newUser = $this->User->findById($this->User->getLastInsertId());
@@ -49,18 +39,44 @@ class UsersController extends AppController
                     $this->User->id = $newUser['User']['id'];
                     $this->User->saveField('last_login_time', date('Y-m-d H:i:s'));
     
-                    $this->Session->setFlash(__('Registration successful! Welcome, ' . $newUser['User']['name']));
-                    return $this->redirect($this->Auth->redirectUrl());
+                    // Return a JSON success response
+                    $response = array(
+                        'status' => 'success',
+                        'message' => 'Registration successful! Welcome, ' . $newUser['User']['name']
+                    );
                 } else {
-                    $this->Session->setFlash(__('Failed to log you in. Please try logging in manually.'));
-                    return $this->redirect(array('action' => 'login'));
+                    // Return JSON error response if auto-login fails
+                    $response = array(
+                        'status' => 'error',
+                        'message' => 'Failed to log you in. Please try logging in manually.'
+                    );
                 }
+            } else {
+                // Get the validation errors
+                $validationErrors = $this->User->validationErrors;
+    
+                // Format the validation errors into a readable format
+                $errorMessages = [];
+                foreach ($validationErrors as $field => $errors) {
+                    $errorMessages[] = implode(', ', $errors);
+                }
+    
+                // Return JSON error response with validation messages
+                $response = array(
+                    'status' => 'error',
+                    'message' => 'Failed to register. ' . implode(' ', $errorMessages)
+                );
             }
     
-            // If registration fails
-            $this->Session->setFlash(__('Failed to register. Please check your details and try again.'));
+            // Send the JSON response
+            $this->autoRender = false;
+            $this->response->type('json');
+            $this->response->body(json_encode($response));
+            return $this->response;
         }
     }
+    
+    
     
     
 
@@ -121,16 +137,6 @@ class UsersController extends AppController
         
             // Validate the email to be unique and in a valid format
             $this->User->validate = array(
-                'email' => array(
-                    'validEmail' => array(
-                        'rule' => 'email',
-                        'message' => 'Please enter a valid email address.'
-                    ),
-                    'uniqueEmail' => array(
-                        'rule' => 'isUnique',
-                        'message' => 'This email address is already taken.'
-                    )
-                ),
                 'name' => array(
                     'rule' => array('between', 5, 20),
                     'message' => 'Name must be between 5 to 20 characters long.'
@@ -192,9 +198,63 @@ class UsersController extends AppController
         // Return the response in JSON format
         echo json_encode(['users' => $results]);
     }
+   
+    public function changeEmailPassword() {
+        if ($this->request->is('post') || $this->request->is('put')) {
+            if ($this->request->is('ajax')) {
+                $this->autoRender = false; // Disable view rendering for AJAX requests
     
+                $userId = $this->Auth->user('id');
+                $email = $this->request->data['User']['email'];
     
+                // Check if the email is already taken
+                $existingUser = $this->User->find('first', array(
+                    'conditions' => array('User.email' => $email, 'User.id !=' => $userId),
+                    'fields' => array('User.id')
+                ));
     
+                if (!empty($existingUser)) {
+                    echo json_encode(array('success' => false, 'message' => 'This email is already taken. Please choose another one.'));
+                    return;
+                }
     
+                $this->User->id = $userId;
+                if ($this->User->save($this->request->data)) {
+                    $updatedUser = $this->User->findById($userId);
+                    if ($updatedUser) {
+                        $this->Auth->login($updatedUser['User']);
+                    }
+    
+                    echo json_encode(array('success' => true, 'message' => 'Email and password updated successfully.'));
+                } else {
+                    echo json_encode(array('success' => false, 'message' => 'Unable to update email and password. Please correct the errors below.'));
+                }
+            } else {
+                // Handle non-AJAX request
+                $this->User->id = $this->Auth->user('id');
+                if ($this->User->save($this->request->data)) {
+                    $updatedUser = $this->User->findById($this->Auth->user('id'));
+                    if ($updatedUser) {
+                        $this->Auth->login($updatedUser['User']);
+                    }
+        
+                    // Set success flash message and redirect to profile page
+                    $this->Session->setFlash('Email and password updated successfully.');
+                    $this->redirect(array('controller' => 'users', 'action' => 'viewProfile')); // Redirect to profile page
+                } else {
+                    // Set error flash message if unable to save
+                    $this->Session->setFlash('Unable to update email and password. Please correct the errors below.');
+                }
+            }
+        } else {
+            // If not POST or PUT, load the user's existing data
+            $this->request->data = $this->User->findById($this->Auth->user('id'));
+            if (!$this->request->data) {
+                throw new NotFoundException(__('Invalid user'));
+            }
+        }
+    }
+    
+ 
     
 }

@@ -7,7 +7,10 @@ function calculateAge($birthdate) {
 }
 ?>
 <h1 class="profile-title">User Profile</h1>
+
+
 <div class="container">
+<button onclick="window.history.back();" class="btn btn-secondary" style="margin-bottom: 20px; margin-top: 20px; float: right">Back</button>
     <div class="user-profile">
         <div class="profile-pic-section">
             <?php

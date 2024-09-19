@@ -4,73 +4,103 @@ class ConversationsController extends AppController {
     public $uses = array('Conversation', 'Message', 'User'); // Ensure you use User model if needed
 
     // List conversations for the logged-in user
-   public function index() {
-    $userId = $this->Auth->user('id');
-    $limit = 5; // Limit to 5 conversations per request
-    $offset = isset($this->request->query['offset']) ? (int)$this->request->query['offset'] : 0; // Handle offset for AJAX
-
-    // Fetch conversations with the latest message and user details
-    $conversations = $this->Conversation->find('all', array(
-        'fields' => array(
-            'Conversation.id',
-            'Conversation.sender_id',
-            'Conversation.receiver_id',
-            'Message.user_id',
-            'Message.message',
-            'Message.created',
-            'SenderUser.name',
-            'ReceiverUser.name',
-            'SenderUser.profile_picture',
-            'ReceiverUser.profile_picture'
-        ),
-        'joins' => array(
-            array(
-                'table' => 'messages',
-                'alias' => 'Message',
-                'type' => 'INNER',
-                'conditions' => array(
-                    'Message.conversation_id = Conversation.id',
-                    'Message.created = (SELECT MAX(created) FROM messages WHERE conversation_id = Conversation.id)'
+    public function index() {
+        $userId = $this->Auth->user('id');
+       
+        $limit = isset($this->request->query['limit']) ? (int)$this->request->query['limit'] : 3;
+        $offset = isset($this->request->query['offset']) ? (int)$this->request->query['offset'] : 0;
+    
+        // Subquery to get the latest message for each conversation
+        $latestMessagesSubquery = $this->Message->query("
+            SELECT conversation_id, MAX(created) as latest_created
+            FROM messages
+            GROUP BY conversation_id
+        ");
+        
+        $latestMessagesConditions = [];
+        foreach ($latestMessagesSubquery as $row) {
+            $latestMessagesConditions[] = $row['messages']['conversation_id'];
+        }
+    
+        // Fetching conversations without search term
+        $conversations = $this->Conversation->find('all', array(
+            'fields' => array(
+                'Conversation.id',
+                'Conversation.sender_id',
+                'Conversation.receiver_id',
+                'Message.user_id',
+                'Message.message',
+                'Message.created',
+                'SenderUser.name',
+                'ReceiverUser.name',
+                'SenderUser.profile_picture',
+                'ReceiverUser.profile_picture'
+            ),
+            'joins' => array(
+                array(
+                    'table' => 'messages',
+                    'alias' => 'Message',
+                    'type' => 'INNER',
+                    'conditions' => array(
+                        'Message.conversation_id = Conversation.id',
+                        'Message.created = (SELECT MAX(created) FROM messages WHERE conversation_id = Conversation.id)'
+                    )
+                ),
+                array(
+                    'table' => 'users',
+                    'alias' => 'SenderUser',
+                    'type' => 'INNER',
+                    'conditions' => array(
+                        'SenderUser.id = Conversation.sender_id'
+                    )
+                ),
+                array(
+                    'table' => 'users',
+                    'alias' => 'ReceiverUser',
+                    'type' => 'INNER',
+                    'conditions' => array(
+                        'ReceiverUser.id = Conversation.receiver_id'
+                    )
                 )
             ),
-            array(
-                'table' => 'users',
-                'alias' => 'SenderUser',
-                'type' => 'INNER',
-                'conditions' => array(
-                    'SenderUser.id = Conversation.sender_id'
+            'conditions' => array(
+                'Conversation.id' => $latestMessagesConditions,
+                'OR' => array(
+                    'Conversation.sender_id' => $userId,
+                    'Conversation.receiver_id' => $userId
                 )
             ),
-            array(
-                'table' => 'users',
-                'alias' => 'ReceiverUser',
-                'type' => 'INNER',
-                'conditions' => array(
-                    'ReceiverUser.id = Conversation.receiver_id'
+            'order' => array('Message.created' => 'DESC'),
+            'limit' => $limit,
+            'offset' => $offset
+        ));
+        
+        $totalConversations = $this->Conversation->find('count', array(
+            'conditions' => array(
+                'Conversation.id' => $latestMessagesConditions,
+                'OR' => array(
+                    'Conversation.sender_id' => $userId,
+                    'Conversation.receiver_id' => $userId
                 )
             )
-        ),
-        'conditions' => array(
-            'OR' => array(
-                'Conversation.sender_id' => $userId,
-                'Conversation.receiver_id' => $userId
-            )
-        ),
-        'order' => array('Message.created' => 'DESC'),
-        'limit' => $limit,
-        'offset' => $offset
-    ));
-
-    // If the request is AJAX, return JSON response
-    if ($this->request->is('ajax')) {
-        $this->autoRender = false;
-        echo json_encode($conversations);
-    } else {
-        // For normal request, pass data to view
-        $this->set(compact('conversations', 'userId'));
+        ));
+        
+        $hasMore = ($totalConversations > ($offset + $limit));
+        
+        if ($this->request->is('ajax')) {
+            $this->autoRender = false;
+            $this->response->type('json');
+            echo json_encode(array(
+                'conversations' => $conversations,
+                'hasMore' => $hasMore
+            ));
+            return;
+        }
+        
+        $this->set(compact('conversations', 'userId', 'totalConversations', 'limit'));
     }
-}
-
+    
+    
     
     
     // View specific conversation
@@ -282,6 +312,100 @@ public function delete() {
         throw new MethodNotAllowedException();
     }
 }
+
+public function search() {
+    $userId = $this->Auth->user('id');
+    $searchTerm = isset($this->request->query['search']) ? trim($this->request->query['search']) : '';
+    
+    if (!$searchTerm) {
+        $this->autoRender = false;
+        $this->response->type('json');
+        echo json_encode(array(
+            'conversations' => [],
+            'hasMore' => false
+        ));
+        return;
+    }
+
+    // Subquery to get the latest message for each conversation
+    $latestMessagesSubquery = $this->Message->query("
+        SELECT conversation_id, MAX(created) as latest_created
+        FROM messages
+        GROUP BY conversation_id
+    ");
+    
+    $latestMessagesConditions = [];
+    foreach ($latestMessagesSubquery as $row) {
+        $latestMessagesConditions[] = $row['messages']['conversation_id'];
+    }
+
+    // Fetch conversations that match the search term
+    $conversations = $this->Conversation->find('all', array(
+        'fields' => array(
+            'Conversation.id',
+            'Conversation.sender_id',
+            'Conversation.receiver_id',
+            'Message.user_id',
+            'Message.message',
+            'Message.created',
+            'SenderUser.name',
+            'ReceiverUser.name',
+            'SenderUser.profile_picture',
+            'ReceiverUser.profile_picture'
+        ),
+        'joins' => array(
+            array(
+                'table' => 'messages',
+                'alias' => 'Message',
+                'type' => 'INNER',
+                'conditions' => array(
+                    'Message.conversation_id = Conversation.id',
+                    'Message.created = (SELECT MAX(created) FROM messages WHERE conversation_id = Conversation.id)'
+                )
+            ),
+            array(
+                'table' => 'users',
+                'alias' => 'SenderUser',
+                'type' => 'INNER',
+                'conditions' => array(
+                    'SenderUser.id = Conversation.sender_id'
+                )
+            ),
+            array(
+                'table' => 'users',
+                'alias' => 'ReceiverUser',
+                'type' => 'INNER',
+                'conditions' => array(
+                    'ReceiverUser.id = Conversation.receiver_id'
+                )
+            )
+        ),
+        'conditions' => array(
+            'Conversation.id' => $latestMessagesConditions,
+            'OR' => array(
+                'Conversation.sender_id' => $userId,
+                'Conversation.receiver_id' => $userId
+            ),
+            'AND' => array(
+                'OR' => array(
+                    'SenderUser.name LIKE' => '%' . $searchTerm . '%',
+                    'ReceiverUser.name LIKE' => '%' . $searchTerm . '%',
+                    'Message.message LIKE' => '%' . $searchTerm . '%'
+                )
+            )
+        ),
+        'order' => array('Message.created' => 'DESC'),
+    ));
+    
+    $this->autoRender = false;
+    $this->response->type('json');
+    echo json_encode(array(
+        'conversations' => $conversations
+    ));
+    return;
+}
+
+
 
 
 }

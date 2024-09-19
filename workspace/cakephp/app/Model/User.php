@@ -5,8 +5,14 @@ class User extends AppModel
 {
     public $validate = array(
         'name' => array(
-            'rule' => 'notBlank',
-            'message' => 'Please provide a name.'
+            'notBlank' => array(
+                'rule' => 'notBlank',
+                'message' => 'Please provide a name.'
+            ),
+            'between' => array(
+                'rule' => array('lengthBetween', 5, 20),
+                'message' => 'Name must be between 5 and 20 characters.'
+            )
         ),
         'email' => array(
             'email' => array(
@@ -38,8 +44,6 @@ class User extends AppModel
         )
     );
 
-
-    // Custom validation function to compare password and password_confirm
     public function validatePasswordConfirm($check)
     {
         $passwordConfirm = array_values($check)[0];

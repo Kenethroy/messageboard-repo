@@ -34,6 +34,8 @@ Router::connect('users/editProfile', array('controller' => 'users', 'action' => 
 Router::connect('/users/search', ['controller' => 'users', 'action' => 'search']);
 Router::connect('users/logout', array('controller' => 'users', 'action' => 'logout'));
 Router::connect('users/viewProfile', array('controller' => 'users', 'action' => 'viewProfile'));
+Router::connect('/users/changeEmailPassword', ['controller' => 'users', 'action' => 'changeEmailPassword']);
+
 
 Router::connect('/conversations', array('controller' => 'conversations', 'action' => 'index'));	
 Router::connect('/conversations/view/:id', array('controller' => 'conversations', 'action' => 'view'), array('pass' => array('id'), 'id' => '[0-9]+'));

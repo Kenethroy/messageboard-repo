@@ -1,5 +1,9 @@
 <div class="conversation-header">
-    <h3>Messages Details</h3>
+   
+    <div> 
+     <button onclick="window.history.back();" class="btn btn-secondary" style="margin-bottom: 20px; margin-top: 20px; float: right">Back</button>
+     <h1 style="text-align: center;">Message Details</h1>
+    </div>
     <?php echo $this->Form->create('Conversation', array('url' => array('action' => 'reply'), 'type' => 'post', 'id' => 'replyForm')); ?>
     <?php echo $this->Form->hidden('conversation_id', array('value' => $conversation['Conversation']['id'])); ?>
     <?php echo $this->Form->hidden('user_id', array('value' => $userId)); ?>
@@ -12,9 +16,6 @@
         <button id="showMoreButton" class="btn btn-primary">Show More</button>
     </div>
 </div>
-
-<?php echo $this->Html->link('Back to List', array('action' => 'index'), array('class' => 'btn btn-secondary')); ?>
-
 <style>
     .conversation-header  {
         width: 100%;
@@ -108,6 +109,9 @@
     }
     .profile-picture.left {
         float: left;
+    }
+    .sendMessageButton {
+        float: right;
     }
 
 </style>

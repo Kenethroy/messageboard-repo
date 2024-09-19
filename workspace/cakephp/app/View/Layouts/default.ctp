@@ -19,6 +19,7 @@
             <div class="user-info">
                 <span>Welcome, <?php echo h($this->Session->read('Auth.User.name')); ?>!</span>
                 <a href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'viewProfile')); ?>">View Profile</a>
+                <a href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'changeEmailPassword')); ?>">Change Email/Password</a>
                 <a href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'logout')); ?>">Logout</a>
             </div>
         <?php else: ?>
