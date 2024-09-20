@@ -5,7 +5,7 @@
         <button id="searchButton">Search</button>
     </div>
     <div>
-        <button class="messagesButton" style="margin-top: 10px; margin-bottom: 10px; margin-left: 300px">
+        <button class="messagesButton" style="margin-top: 10px; margin-bottom: 10px; margin-left: 300px; text-decoration:none">
             <?php echo $this->Html->link('New Messages', array('controller' => 'conversations', 'action' => 'newConversation')); ?>
         </button>
     </div>
@@ -68,7 +68,7 @@
                     : '<?php echo Router::url("/uploads/default.jpeg"); ?>';
                     
                 var html = '<div class="conversation-item" id="conversation-' + conversation.Conversation.id + '">' +
-                           '<a href="' + '<?php echo $this->Html->url(array('action' => 'view')); ?>/' + conversation.Conversation.id + '" class="conversation-link">' +
+                           '<a class="url" href="' + '<?php echo $this->Html->url(array('action' => 'view')); ?>/' + conversation.Conversation.id + '" class="conversation-link">' +
                            '<div class="profile-pic">' +
                            '<img src="' + profilePictureUrl + '" alt="Profile Picture" width="100">' +
                            '</div>' +
@@ -201,7 +201,7 @@
         display: flex;
         align-items: center;
     }
-    a {
+    .url {
         color: inherit;
         text-decoration: none;
         display: flex;

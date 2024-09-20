@@ -13,11 +13,12 @@
 
     <!-- Header Section -->
     <div class="header">
-        <h1>Message Board</h1>
+        <h1 style="text-align:left;">Message Board</h1>
         
         <?php if ($this->Session->check('Auth.User')): ?>
             <div class="user-info">
                 <span>Welcome, <?php echo h($this->Session->read('Auth.User.name')); ?>!</span>
+                <a href="<?php echo $this->Html->url(array('controller' => 'conversations', 'action' => 'index')); ?>">Conversations</a>
                 <a href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'viewProfile')); ?>">View Profile</a>
                 <a href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'changeEmailPassword')); ?>">Change Email/Password</a>
                 <a href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'logout')); ?>">Logout</a>

@@ -145,12 +145,14 @@ $(document).ready(function() {
                 } else {
                     messagesContainer.empty();
                     appendMessages(data.messages);
-                    if (data.hasMore) {
-                        $('#showMoreButton').show();
-                    } else {
-                        $('#showMoreButton').hide(); // Hide the button if no more messages
-                    }
+                   
                 }
+                if (data.hasMore) {
+                        $('#showMoreButton').show();
+                        
+                    } else {
+                        $('#showMoreButton').hide(); 
+                    }
                 if (data.messages.length < limit) {
                     $('#showMoreButton').hide();
                 }
@@ -230,31 +232,39 @@ $(document).ready(function() {
         }
     });
 
-    // Handle form submission via AJAX for deleting a message
-    $(document).on('click', '.delete-btn', function() {
-        const button = $(this);
-        const messageId = button.data('id');
+   // Handle form submission via AJAX for deleting a message
+$(document).on('click', '.delete-btn', function() {
+    const button = $(this);
+    const messageId = button.data('id');
 
-        $.ajax({
-            url: '<?php echo $this->Html->url(array('action' => 'deleteMessage')); ?>',
-            type: 'POST',
-            dataType: 'json',
-            data: { id: messageId },
-            success: function(data) {
-                if (data.success) {
-                    $(`#message-${messageId}`).fadeOut(300, function() {
-                        $(this).remove();
+    $.ajax({
+        url: '<?php echo $this->Html->url(array('action' => 'deleteMessage')); ?>',
+        type: 'POST',
+        dataType: 'json',
+        data: { id: messageId },
+        success: function(data) {
+            if (data.success) {
+                $(`#message-${messageId}`).fadeOut(300, function() {
+                    $(this).remove();
+                    if (data.conversationDeleted) {
+                        // Redirect to the conversation index if the conversation was deleted
+                        window.location.href = '<?php echo $this->Html->url(array('action' => 'index')); ?>';
+                    } else {
+                        // Reload the remaining messages if the conversation still exists
                         loadMessages();
-                    });
-                } else {
-                    alert('Failed to delete the message.');
-                }
-            },
-            error: function() {
-                alert('Error: Failed to delete the message.');
+                    }
+                });
+            } else {
+                alert('Failed to delete the message.');
+                loadMessages();
             }
-        });
+        },
+        error: function() {
+            alert('Error: Failed to delete the message.');
+        }
     });
+});
+
 
     // Initial load of messages
     loadMessages();

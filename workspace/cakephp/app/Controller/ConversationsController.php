@@ -207,18 +207,41 @@ class ConversationsController extends AppController {
         $this->autoRender = false;
         $messageId = $this->request->data['id'];
         
+        // Get the conversation ID of the message to be deleted
+        $message = $this->Message->findById($messageId);
+        $conversationId = $message['Message']['conversation_id'];
+    
+        // Attempt to delete the message
         if ($this->Message->delete($messageId)) {
-            $response = array('success' => true);
+            
+            // Check if there are any more messages in the conversation
+            $remainingMessages = $this->Message->find('count', [
+                'conditions' => ['Message.conversation_id' => $conversationId]
+            ]);
+    
+            if ($remainingMessages == 0) {
+                // If no more messages, delete the conversation as well
+                if ($this->Conversation->delete($conversationId)) {
+                    // Return success and indicate the conversation was deleted
+                    $response = array('success' => true, 'conversationDeleted' => true);
+                } else {
+                    // If unable to delete the conversation
+                    $response = array('success' => false, 'errors' => ['Failed to delete the conversation.']);
+                }
+            } else {
+                // Return success and indicate the conversation still exists
+                $response = array('success' => true, 'conversationDeleted' => false);
+            }
         } else {
+            // Respond with failure and validation errors
             $response = array('success' => false, 'errors' => $this->Message->validationErrors);
         }
-        
-        // Ensure proper content type and JSON encoding
-        $this->autoRender = false;
+    
+        // Return the JSON response
         $this->response->type('application/json');
         $this->response->body(json_encode($response));
-
     }
+    
     
     public function start() {
         $this->autoRender = false; // Disable view rendering
