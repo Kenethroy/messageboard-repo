@@ -171,14 +171,22 @@ class UsersController extends AppController
         $this->autoRender = false; // Disable view rendering for AJAX call
         $query = $this->request->query('q'); // Get the search term
         $currentUserId = $this->Auth->user('id'); // Get the logged-in user's ID
-    
-        $this->loadModel('User'); // Load the User model
-    
-        // Find users whose names match the search term, excluding the logged-in user
+        
         $users = $this->User->find('all', [
+            'joins' => [
+                [
+                    'table' => 'conversations',
+                    'alias' => 'Conversation',
+                    'type' => 'LEFT',
+                    'conditions' => [
+                        'Conversation.sender_id = User.id OR Conversation.receiver_id = User.id'
+                    ]
+                ]
+            ],
             'conditions' => [
                 'User.name LIKE' => '%' . $query . '%',
-                'User.id !=' => $currentUserId // Exclude the logged-in user
+                'User.id !=' => $currentUserId, // Exclude the logged-in user
+                'Conversation.id IS NULL' // Ensure no existing conversations
             ],
             'fields' => ['User.id', 'User.name', 'User.profile_picture'], // Include profile_picture
             'limit' => 10
@@ -197,6 +205,8 @@ class UsersController extends AppController
         // Return the response in JSON format
         echo json_encode(['users' => $results]);
     }
+    
+
    
     public function changeEmailPassword() {
         if ($this->request->is('post') || $this->request->is('put')) {

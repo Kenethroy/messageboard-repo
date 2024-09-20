@@ -3,15 +3,14 @@
 <div class="conversation-container">
     <?php echo $this->Form->create('Conversation', array('url' => array('action' => 'start'), 'type' => 'post', 'id' => 'newConversationForm')); ?>
     <div class="error-message" id="error-message"></div>
-   
+    <?php echo $this->Form->input('receiver_id', array('type' => 'hidden', 'id' => 'receiverId')); ?>
     <div class="form-group">
         <label for="userSearch" class="form-label"></label>
-        <?php echo $this->Form->input('receiver_id', array('type' => 'hidden', 'id' => 'receiverId')); ?>
         <?php echo $this->Form->input('search name', array('type' => 'text', 'id' => 'userSearch', 'class' => 'form-control search-input')); ?>
     </div>
 
     <div class="form-group">
-        <label for="subject" class="form-label">Send To:</label>
+        <label for="receiverName" class="form-label">Send To:</label>
         <?php echo $this->Form->input('', array('type' => 'text', 'id' => 'receiverName', 'class' => 'form-control', 'readonly' => true)); ?>
 
     </div>
@@ -22,7 +21,7 @@
 
     <!-- Submit Button -->
     <div class="form-group">
-        <?php echo $this->Form->button('Send Message', array('type' => 'submit', 'class' => 'btn btn-primary submit-btn')); ?>
+        <?php echo $this->Form->button('Send Message', array('type' => 'submit', 'class' => 'btn btn-primary submit-btn', 'id' => 'sendMessageButton')); ?>
     </div>
 
     <?php echo $this->Form->end(); ?>
