@@ -8,6 +8,10 @@ class UsersController extends AppController
         parent::beforeFilter();
         $this->Auth->allow('register', 'login');
     }
+
+     public function index() {
+        // Example action (this would now be protected by Auth)
+    }
      
     public function viewProfile($id = null) {
         // Check if the user exists
@@ -74,11 +78,7 @@ class UsersController extends AppController
             $this->response->body(json_encode($response));
             return $this->response;
         }
-    }
-    
-    
-    
-    
+    } 
 
     public function login() {
         if ($this->request->is('post')) {
@@ -94,8 +94,8 @@ class UsersController extends AppController
         }
     }
 
-    public function logout()
-    {
+    public function logout() {
+
         return $this->redirect($this->Auth->logout());
     }
     public function editProfile() {
@@ -166,7 +166,6 @@ class UsersController extends AppController
             }
         }
     }
-    
     
     public function search() {
         $this->autoRender = false; // Disable view rendering for AJAX call
@@ -254,7 +253,5 @@ class UsersController extends AppController
             }
         }
     }
-    
- 
     
 }

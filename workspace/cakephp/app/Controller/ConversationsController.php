@@ -99,10 +99,7 @@ class ConversationsController extends AppController {
         
         $this->set(compact('conversations', 'userId', 'totalConversations', 'limit'));
     }
-    
-    
-    
-    
+
     // View specific conversation
     public function view($conversationId = null) {
         if (!$conversationId) {
@@ -151,9 +148,6 @@ class ConversationsController extends AppController {
             throw new MethodNotAllowedException('Invalid request method');
         }
     }
-
-    
-    
 
     public function fetchMessages() {
         $this->autoRender = false;
@@ -286,61 +280,60 @@ class ConversationsController extends AppController {
         }
     }
     
-    public function newConversation() {
+    public function newConversation() { 
     
-    
-    
-}
-public function delete() {
-    $this->request->allowMethod('post'); // Ensure only POST requests are accepted
-
-    if ($this->request->is('post')) {
-        $conversationId = $this->request->data['id'];
-        $this->Conversation->id = $conversationId;
-
-        if (!$this->Conversation->exists()) {
-            throw new NotFoundException(__('Invalid conversation'));
-        }
-
-        if ($this->Conversation->delete()) {
-            echo json_encode(['success' => true]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Unable to delete conversation']);
-        }
-        $this->autoRender = false; // Prevent CakePHP from rendering a view
-    } else {
-        throw new MethodNotAllowedException();
     }
-}
+    public function delete() {
+        $this->request->allowMethod('post'); // Ensure only POST requests are accepted
 
-public function search() {
-    $userId = $this->Auth->user('id');
-    $searchTerm = isset($this->request->query['search']) ? trim($this->request->query['search']) : '';
+         if ($this->request->is('post')) {
+             $conversationId = $this->request->data['id'];
+             $this->Conversation->id = $conversationId;
+
+            if (!$this->Conversation->exists()) {
+            throw new NotFoundException(__('Invalid conversation'));
+            }
+
+            if ($this->Conversation->delete()) {
+            echo json_encode(['success' => true]);
+            } else {
+            echo json_encode(['success' => false, 'message' => 'Unable to delete conversation']);
+            }
+
+            $this->autoRender = false; // Prevent CakePHP from rendering a view
+            } else {
+            throw new MethodNotAllowedException();
+        }
+    }
+
+    public function search() {
+        $userId = $this->Auth->user('id');
+        $searchTerm = isset($this->request->query['search']) ? trim($this->request->query['search']) : '';
     
-    if (!$searchTerm) {
-        $this->autoRender = false;
-        $this->response->type('json');
-        echo json_encode(array(
+        if (!$searchTerm) {
+          $this->autoRender = false;
+          $this->response->type('json');
+            echo json_encode(array(
             'conversations' => [],
             'hasMore' => false
-        ));
-        return;
-    }
+            ));
+             return;
+        }
 
     // Subquery to get the latest message for each conversation
-    $latestMessagesSubquery = $this->Message->query("
-        SELECT conversation_id, MAX(created) as latest_created
-        FROM messages
-        GROUP BY conversation_id
-    ");
+        $latestMessagesSubquery = $this->Message->query("
+         SELECT conversation_id, MAX(created) as latest_created
+         FROM messages
+         GROUP BY conversation_id
+        ");
     
-    $latestMessagesConditions = [];
-    foreach ($latestMessagesSubquery as $row) {
-        $latestMessagesConditions[] = $row['messages']['conversation_id'];
-    }
+         $latestMessagesConditions = [];
+         foreach ($latestMessagesSubquery as $row) {
+         $latestMessagesConditions[] = $row['messages']['conversation_id'];
+        }
 
     // Fetch conversations that match the search term
-    $conversations = $this->Conversation->find('all', array(
+        $conversations = $this->Conversation->find('all', array(
         'fields' => array(
             'Conversation.id',
             'Conversation.sender_id',
@@ -395,17 +388,15 @@ public function search() {
             )
         ),
         'order' => array('Message.created' => 'DESC'),
-    ));
+        ));
     
-    $this->autoRender = false;
-    $this->response->type('json');
-    echo json_encode(array(
+        $this->autoRender = false;
+        $this->response->type('json');
+        echo json_encode(array(
         'conversations' => $conversations
-    ));
-    return;
-}
+        ));
+        return;
 
-
-
+    }
 
 }

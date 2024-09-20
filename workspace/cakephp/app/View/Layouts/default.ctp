@@ -24,6 +24,7 @@
             </div>
         <?php else: ?>
             <div class="user-info">
+                <a href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'register')); ?>">Register</a>
                 <a href="<?php echo $this->Html->url(array('controller' => 'users', 'action' => 'login')); ?>">Login</a>
             </div>
         <?php endif; ?>

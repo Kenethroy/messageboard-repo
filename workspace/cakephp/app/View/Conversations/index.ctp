@@ -18,175 +18,156 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    let limit = 3;
-    let offset = parseInt(localStorage.getItem('offset')) || 0;
-    console.log('Initial offset from localStorage:', offset);
+    $(document).ready(function() {
+        let limit = 3;
+        let offset = parseInt(localStorage.getItem('offset')) || 0;
+        console.log('Initial offset from localStorage:', offset);
 
-    function loadConversations(loadMore = false) {
-        console.log('Loading conversations with offset:', offset); // Log the current offset value
-        
-        $.ajax({
-            url: '<?php echo $this->Html->url(array('action' => 'index')); ?>',
-            type: 'GET',
-            dataType: 'json',
-            data: {
-                offset: offset,
-                limit: limit
-            },
-            success: function(data) {
-                const conversationsContainer = $('#conversationList');
-                if (loadMore) {
-                    appendConversations(data.conversations);
-                } else {
-                    conversationsContainer.empty();
-                    appendConversations(data.conversations);
-                    if (data.hasMore) {
-                        $('#showMoreButton').show();
+        function loadConversations(loadMore = false) {
+            console.log('Loading conversations with offset:', offset);
+            
+            $.ajax({
+                url: '<?php echo $this->Html->url(array('action' => 'index')); ?>',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    offset: offset,
+                    limit: limit
+                },
+                success: function(data) {
+                    const conversationsContainer = $('#conversationList');
+                    if (loadMore) {
+                        appendConversations(data.conversations);
                     } else {
-                        $('#showMoreButton').hide(); // Hide the button if no more messages
+                        conversationsContainer.empty();
+                        appendConversations(data.conversations);
+                        if (data.hasMore) {
+                            $('#showMoreButton').show();
+                        } else {
+                            $('#showMoreButton').hide();
+                        }
                     }
-                }
-                if (data.conversations.length < limit) {
-                    $('#showMoreButton').hide();
-                }
-            },
-            error: function() {
-                $('#conversationList').html('<div class="alert alert-danger">Failed to load messages.</div>');
-            }
-        });
-    }
-
-    // Append messages to the container
-    function appendConversations(conversations) {
-        const conversationsContainer = $('#conversationList');
-        conversations.forEach(function(conversation) {
-            console.log('Conversation ID:', conversation.Conversation.id);
-
-            const profilePictureUrl = conversation.SenderUser.profile_picture
-                ? '<?php echo Router::url("/uploads/"); ?>' + conversation.SenderUser.profile_picture 
-                : '<?php echo Router::url("/uploads/default.jpeg"); ?>';
-                
-            var html = '<div class="conversation-item" data-id="' + conversation.Conversation.id + '">' +
-                       '<a href="' + '<?php echo $this->Html->url(array('action' => 'view')); ?>/' + conversation.Conversation.id + '" class="conversation-link">' +
-                       '<div class="profile-pic">' +
-                       '<img src="' + profilePictureUrl + '" alt="Profile Picture" width="100">' +
-                       '</div>' +
-                       '<div class="conversation-details">' +
-                       '<div class="latest-message">' + 
-                       (conversation.Message.user_id == <?php echo $this->Session->read('Auth.User.id'); ?> ? 'You: ' : conversation.SenderUser.name + ': ') + 
-                       conversation.Message.message + 
-                       '</div>' +
-                       '<div class="message-date">' + conversation.Message.created + '</div>' +
-                       '</div>' +
-                       '</a>' +
-                       '<div class="delete-button">' +
-                       '<button class="btn btn-danger delete" data-id="' + conversation.Conversation.id + '">Delete</button>' +
-                       '</div>' +
-                       '</div>';
-                       
-            conversationsContainer.append(html);
-        });
-    }
-
-    // Handle "Show More" button click
-    $('#showMoreButton').click(function() {
-        offset += limit;
-        localStorage.setItem('offset', offset); // Store updated offset in localStorage
-        console.log('Updated offset in localStorage:', offset); // Log the updated offset
-        loadConversations(true);
-    });
-
-    $(document).on('click', '.delete', function() {
-        var button = $(this);
-        var conversationId = button.data('id');
-        
-        $.ajax({
-            url: '<?php echo $this->Html->url(array('controller' => 'conversations', 'action' => 'delete')); ?>',
-            type: 'POST',
-            data: {
-                id: conversationId
-            },
-            dataType: 'json',
-            success: function(data) {
-                if (data.success) {
-                    button.closest('.conversation-item').fadeOut();
-                    loadConversations();
-                } else {
-                    alert('Error: ' + data.message); // Show error message
-                }
-            },
-            error: function() {
-                alert('Failed to delete the conversation. Please try again.'); // Handle errors
-            }
-        });
-    });
-
-    function performSearch(searchTerm) {
-        $.ajax({
-            url: '<?php echo $this->Html->url(['controller' => 'conversations', 'action' => 'search']); ?>',
-            type: 'GET',
-            data: { search: searchTerm },
-            dataType: 'json',
-            success: function(data) {
-                if (data && data.conversations) {
-                    $('#conversationList').empty(); // Clear previous results
-                    console.log(data.conversations);
-                    if (data.conversations.length === 0) {
-                        $('#conversationList').append('<div class="no-results">No conversations found.</div>');
-                    } else {
-                        $.each(data.conversations, function(index, conversation) {
-                            const profilePictureUrl = conversation.SenderUser.profile_picture
-                                ? '<?php echo Router::url("/uploads/"); ?>' + conversation.SenderUser.profile_picture 
-                                : '<?php echo Router::url("/uploads/default.jpeg"); ?>';
-
-                            var html = '<div class="conversation-item" data-id="' + conversation.Conversation.id + '">' +
-                                       '<a href="' + '<?php echo $this->Html->url(array('action' => 'view')); ?>/' + conversation.Conversation.id + '" class="conversation-link">' +
-                                       '<div class="profile-pic">' +
-                                       '<img src="' + profilePictureUrl + '" alt="Profile Picture" width="100">' +
-                                       '</div>' +
-                                       '<div class="conversation-details">' +
-                                       '<div class="latest-message">' + 
-                                       (conversation.Message.user_id == <?php echo $this->Session->read('Auth.User.id'); ?> ? 'You: ' : conversation.SenderUser.name + ': ') + 
-                                       conversation.Message.message + 
-                                       '</div>' +
-                                       '<div class="message-date">' + conversation.Message.created + '</div>' +
-                                       '</div>' +
-                                       '</a>' +
-                                       '<div class="delete-button">' +
-                                       '<button class="btn btn-danger delete" data-id="' + conversation.Conversation.id + '">Delete</button>' +
-                                       '</div>' +
-                                       '</div>';
-
-                            $('#conversationList').append(html); // Append each conversation to the list
-                        });
+                    if (data.conversations.length < limit) {
+                        $('#showMoreButton').hide();
                     }
+                },
+                error: function() {
+                    $('#conversationList').html('<div class="alert alert-danger">Failed to load messages.</div>');
                 }
-            },
-            error: function() {
-                alert('Error fetching conversations. Please try again.');
-            }
-        });
-    }
-
-    // Attach event listener to the search field
-    $('#searchField').on('input', function() {
-        var searchTerm = $(this).val().trim();
-        if (searchTerm.length > 0) {
-            performSearch(searchTerm);
-        } else {
-            loadConversations();
+            });
         }
-    });
 
-    loadConversations();
+        // Append messages to the container
+        function appendConversations(conversations) {
+            const conversationsContainer = $('#conversationList');
+            conversations.forEach(function(conversation) {
+                console.log('Conversation ID:', conversation.Conversation.id);
 
-    // Reset offset in localStorage when reloading the page
-    $(window).on('beforeunload', function() {
-        localStorage.removeItem('offset');
+                const profilePictureUrl = conversation.SenderUser.profile_picture
+                    ? '<?php echo Router::url("/uploads/"); ?>' + conversation.SenderUser.profile_picture
+                    : '<?php echo Router::url("/uploads/default.jpeg"); ?>';
+                    
+                var html = '<div class="conversation-item" id="conversation-' + conversation.Conversation.id + '">' +
+                           '<a href="' + '<?php echo $this->Html->url(array('action' => 'view')); ?>/' + conversation.Conversation.id + '" class="conversation-link">' +
+                           '<div class="profile-pic">' +
+                           '<img src="' + profilePictureUrl + '" alt="Profile Picture" width="100">' +
+                           '</div>' +
+                           '<div class="conversation-details">' +
+                           '<div class="latest-message">' + 
+                           (conversation.Message.user_id == <?php echo $this->Session->read('Auth.User.id'); ?> ? 'You: ' : conversation.SenderUser.name + ': ') + 
+                           conversation.Message.message + 
+                           '</div>' +
+                           '<div class="message-date">' + conversation.Message.created + '</div>' +
+                           '</div>' +
+                           '</a>' +
+                           '<div class="delete-button">' +
+                           '<button class="btn btn-danger delete" data-id="' + conversation.Conversation.id + '">Delete</button>' +
+                           '</div>' +
+                           '</div>';
+                           
+                conversationsContainer.append(html);
+            });
+        }
+
+        // Handle "Show More" button click
+        $('#showMoreButton').click(function() {
+            offset += limit;
+            localStorage.setItem('offset', offset);
+            console.log('Updated offset in localStorage:', offset);
+            loadConversations(true);
+        });
+
+        // Handle delete button click
+        $(document).on('click', '.delete', function() {
+            var button = $(this);
+            var conversationId = button.data('id');
+            
+            $.ajax({
+                url: '<?php echo $this->Html->url(array('controller' => 'conversations', 'action' => 'delete')); ?>',
+                type: 'POST',
+                data: {
+                    id: conversationId
+                },
+                dataType: 'json',
+                success: function(data) {
+                    if (data.success) {
+                        button.closest('#conversation-' + conversationId).fadeOut(300, function() {
+                            $(this).remove();
+                            loadConversations();
+                        });
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                },
+                error: function() {
+                    alert('Failed to delete the conversation. Please try again.');
+                }
+            });
+        });
+
+        // Perform search
+        function performSearch(searchTerm) {
+            $.ajax({
+                url: '<?php echo $this->Html->url(['controller' => 'conversations', 'action' => 'search']); ?>',
+                type: 'GET',
+                data: { search: searchTerm },
+                dataType: 'json',
+                success: function(data) {
+                    if (data && data.conversations) {
+                        $('#conversationList').empty();
+                        if (data.conversations.length === 0) {
+                            $('#conversationList').append('<div class="no-results">No conversations found.</div>');
+                        } else {
+                            appendConversations(data.conversations);
+                        }
+                    }
+                },
+                error: function() {
+                    alert('Error fetching conversations. Please try again.');
+                }
+            });
+        }
+
+        // Attach event listener to the search field
+        $('#searchField').on('input', function() {
+            var searchTerm = $(this).val().trim();
+            if (searchTerm.length > 0) {
+                performSearch(searchTerm);
+            } else {
+                loadConversations();
+            }
+        });
+
+        // Load initial conversations
+        loadConversations();
+
+        // Reset offset in localStorage when reloading the page
+        $(window).on('beforeunload', function() {
+            localStorage.removeItem('offset');
+        });
     });
-});
 </script>
+
 <style>
     .conversation-header {
         width: 100%;
